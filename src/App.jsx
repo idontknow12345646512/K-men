@@ -155,30 +155,15 @@ export default function App() {
 
       if (beats) {
         const newChain = [...chain, { item: answer, emoji: data.emoji || '✨' }]
-        setFeedback({ type: 'win', explanation, emoji: data.emoji })
+        setFeedback({ type: 'win', explanation, emoji: data.emoji, pendingChain: newChain, pendingItem: answer, pendingEmoji: data.emoji || '✨' })
         setShowConfetti(true)
         setTimeout(() => setShowConfetti(false), 1500)
-
-        setTimeout(() => {
-          setChain(newChain)
-          setCurrentItem(answer)
-          setCurrentEmoji(data.emoji || '✨')
-          setScore(s => s + 1)
-          setFeedback(null)
-          setInput('')
-          setIsLoading(false)
-        }, 1800)
+        setIsLoading(false)
       } else {
         setFeedback({ type: 'lose', explanation, emoji: data.emoji })
         setShake(true)
         setTimeout(() => setShake(false), 600)
-
-        setTimeout(() => {
-          setFinalScore(score)
-          setFinalChain([...chain])
-          setPhase('result')
-          setIsLoading(false)
-        }, 2200)
+        setIsLoading(false)
       }
     } catch (err) {
       setFeedback({ type: 'error', explanation: 'Nepodařilo se spojit se serverem.' })
@@ -186,8 +171,30 @@ export default function App() {
     }
   }
 
+  const handleNext = () => {
+    if (!feedback) return
+    if (feedback.type === 'win') {
+      setChain(feedback.pendingChain)
+      setCurrentItem(feedback.pendingItem)
+      setCurrentEmoji(feedback.pendingEmoji)
+      setScore(s => s + 1)
+      setFeedback(null)
+      setInput('')
+    } else if (feedback.type === 'lose') {
+      setFinalScore(score)
+      setFinalChain([...chain])
+      setPhase('result')
+      setFeedback(null)
+    } else {
+      setFeedback(null)
+    }
+  }
+
   const handleKey = (e) => {
-    if (e.key === 'Enter') submitAnswer()
+    if (e.key === 'Enter') {
+      if (feedback) handleNext()
+      else submitAnswer()
+    }
   }
 
   // ── INTRO SCREEN ─────────────────────────────────────────────────────────────
@@ -499,14 +506,17 @@ export default function App() {
               : feedback.type === 'lose' ? 'rgba(255,79,79,0.4)'
               : 'rgba(255,157,79,0.4)'
             }`,
-            borderRadius: 16,
-            padding: '16px 24px',
+            borderRadius: 20,
+            padding: '20px 28px',
             maxWidth: 420,
             width: '100%',
             textAlign: 'center',
             animation: 'popIn 0.35s ease',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
           }}>
-            <div style={{ fontSize: 32, marginBottom: 6 }}>
+            <div style={{ fontSize: 32 }}>
               {feedback.type === 'win' ? '✅' : feedback.type === 'lose' ? '❌' : '⚠️'}
             </div>
             <p style={{
@@ -515,9 +525,35 @@ export default function App() {
                 : '#ff9d4f',
               fontSize: '1rem',
               fontWeight: 500,
+              lineHeight: 1.5,
             }}>
               {feedback.explanation}
             </p>
+            <button
+              onClick={handleNext}
+              style={{
+                background: feedback.type === 'win'
+                  ? 'linear-gradient(135deg, #4dff91, #00c9ff)'
+                  : feedback.type === 'lose'
+                  ? 'linear-gradient(135deg, #ff4f4f, #ff9d4f)'
+                  : 'linear-gradient(135deg, #ff9d4f, #ffd700)',
+                border: 'none',
+                borderRadius: 50,
+                padding: '12px 32px',
+                fontSize: '1rem',
+                fontWeight: 700,
+                fontFamily: 'var(--font-main)',
+                color: '#000',
+                cursor: 'pointer',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+                alignSelf: 'center',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.06)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.4)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)' }}
+            >
+              {feedback.type === 'win' ? 'Další →' : feedback.type === 'lose' ? 'Zobrazit výsledek →' : 'Zkusit znovu →'}
+            </button>
           </div>
         )}
 
