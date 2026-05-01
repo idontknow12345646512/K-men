@@ -149,9 +149,13 @@ export default function App() {
         return
       }
 
-      if (data.porazí) {
+      // Podpora obou formátů klíčů (s i bez háčků)
+      const beats = data.porazi ?? data['porazí'] ?? false
+      const explanation = data.vysvetleni ?? data['vysvětlení'] ?? ''
+
+      if (beats) {
         const newChain = [...chain, { item: answer, emoji: data.emoji || '✨' }]
-        setFeedback({ type: 'win', explanation: data.vysvětlení, emoji: data.emoji })
+        setFeedback({ type: 'win', explanation, emoji: data.emoji })
         setShowConfetti(true)
         setTimeout(() => setShowConfetti(false), 1500)
 
@@ -165,7 +169,7 @@ export default function App() {
           setIsLoading(false)
         }, 1800)
       } else {
-        setFeedback({ type: 'lose', explanation: data.vysvětlení, emoji: data.emoji })
+        setFeedback({ type: 'lose', explanation, emoji: data.emoji })
         setShake(true)
         setTimeout(() => setShake(false), 600)
 
